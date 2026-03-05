@@ -1,0 +1,82 @@
+Upstream:
+https://raw.githubusercontent.com/kokoryh/Sparkle/refs/heads/master/release/surge/module/bilibili.sgmodule
+
+#!arguments
+Delete:
+创作中心
+
+#!arguments-desc
+Delete:
+创作中心
+
+Add:
+\n\n界面伪装: 默认开启，配置为"#"时关闭，需要额外填写UID字段启用个人空间的伪装，可以给多个人开启，示例：123|456 此时UID为123和456的主页会被伪装\n\n大会员标签: 可选的整数值见bilibili.fake脚本最顶部\n\n等级伪装\n- 0: 禁用\n- 1: 启用
+
+[Map Local]
+Delete regex:
+|v2\/search\/square
+
+Add:
+# 个性装扮页弹窗
+^https:\/\/api\.bilibili\.com\/x\/garb\/popup\? data-type=text data="{}" header="Content-Type: application/json" status-code=200
+# 会员中心页弹窗
+^https:\/\/api\.bilibili\.com\/x\/vip\/window\/list\? data-type=text data="{}" header="Content-Type: application/json" status-code=200
+# 会员购功能按钮页&搜索页商品推荐
+^https:\/\/mall\.bilibili\.com\/mall\/noah\/(feed\/sceneRec|hit_mall_ticket\/list\/v2\?) data-type=text data="{}" header="Content-Type: application/json" status-code=200
+# 会员购搜索框默认填充词
+^https:\/\/mall\.bilibili\.com\/mall-dayu\/mall\/internal\/search\/discovery\/carousel$ data-type=text data="{}" header="Content-Type: application/json" status-code=200
+# 会员购商品详情页优惠券领取提示
+^https:\/\/mall\.bilibili\.com\/mall-dayu\/muggle\/iam\? data-type=text data="{"errtag":0,"code":0,"message":"success"}" header="Content-Type: application/json" status-code=200
+# 会员购商品详情页UP主评测团招募
+^https:\/\/mall\.bilibili\.com\/mall-dayu\/items\/content\/queryActByItem$ data-type=text data="{}" header="Content-Type: application/json" status-code=200
+# 会员购商品详情页相关直播
+^https:\/\/mall\.bilibili\.com\/mall-c-search\/items\/info\/live\? data-type=text data="{}" header="Content-Type: application/json" status-code=200
+
+[Body Rewrite]
+Delete:
+http-response-jq ^https:\/\/api\.bilibili\.com\/pgc\/page\/channel\?
+
+Add:
+# 去除节日背景 国际版添加皮肤
+http-response-jq ^https:\/\/app\.bilibili\.com\/x\/resource\/show\/skin\? '.data |= (if .user_equip then del(.common_equip) else . + {"user_equip":{"package_url":"https://i0.hdslb.com/bfs/garb/zip/61df158ae4ff138f05f4a7f1f645c69bccd1802e.zip","id":1686738549001,"preview":"https://i0.hdslb.com/bfs/garb/e76d23ac0ae142a2f108254e98b8c9eeea23ec82.jpg","data":{"tail_icon_ani":false,"color_mode":"light","color":"#000000","color_second_page":"#FFFFFF","side_bg_color":"","tail_icon_mode":"img","tail_color":"#0D0D0D","head_myself_mp4_play":"loop","tail_color_selected":"#D8648A","tail_icon_ani_mode":""},"ver":1686814802,"package_md5":"5d59bfc325724cee73bf6bc560446119","name":"病名为爱"},"skin_colors":[{"id":8,"name":"简洁白","is_free":true,"color_name":"white"},{"id":2,"name":"少女粉","is_free":true,"color_name":"pink"},{"id":1,"name":"主题黑","is_free":true,"color_name":"black"}]} end)'
+# 首页元素精简&排序 国际版添加动画/影视页/搜索按钮
+http-response-jq ^https:\/\/app\.bilibili\.com\/x\/resource\/show\/tab\/v2\? '.data |= (.tab |= (if any(.name == "动画") then . else . + [{"id":3502,"tab_id":"bangumi","name":"动画","uri":"bilibili://pgc/bangumi_v2","pos":4}] end | if any(.name == "影视") then . else . + [{"id":3503,"tab_id":"bilibili://pgc/cinema-tab","name":"影视","uri":"bilibili://pgc/cinema_v2","pos":5}] end | [("直播","热门","推荐","动画","影视") as $order | .[] | select(.name == $order)]) | .top |= map(select(.name | IN("游戏中心") | not)) | .top_more |= (if any(.name == "搜索") then . else . + [{"id":3196,"icon":"https://i0.hdslb.com/bfs/legacy/9bfee1c9b87e9172e3524a36eddd8a396facd253.png","name":"搜索","uri":"bilibili://search","pos":2}] end) | .bottom |= [("首页","关注","我的") as $order | .[] | select(.name == $order)])'
+# 搜索页过滤搜索发现
+http-response-jq ^https:\/\/app\.bilibili\.com\/x\/v2\/search\/square\? '.data |= map(select(.type != "recommend"))'
+# 动画/影视页精简&排序
+http-response-jq "^https:\/\/api\.bilibili\.com\/pgc\/page\/channel\?.+page_name=(bangumi|cinema)_tab" '.data.modules |= (map(if .type | IN("BANNER", "TIP") then empty else walk(if type == "object" and (.badge_info | has("img")) then .badge_info.img = "" else . end) end) | sort_by({"FUNCTION_TEXT": 0, "FOLLOW_C": 1, "FOLLOW_V": 1, "RANK": 2, "CARD_V": 3, "COMMON_PLAYLIST": 4}[.type]// 114514))'
+# 我的页精简&伪装
+http-response-jq ^https:\/\/app\.bilibili\.com\/x\/v2\/account\/mine(\/ipad)?\? '.data |= (del(.live_tip) | .sections_v2 |= map(if .title == "创作中心" then .items |= map(select(.title | IN("创作中心","稿件管理","主播中心","直播数据"))) elif .title == "我的服务" then .items |= map(if .title == "会员购" then .uri = "bilibili://mall/home" elif .title | IN("我的课程","个性装扮","我的钱包") then . else empty end) elif .title == "更多服务" then .items |= map(select(.title | IN("联系客服","设置"))) else . end) | .follower |= if "{{{界面伪装}}}" == "#" then . else "{{{-  粉丝数}}}" end | .senior_gate = {"member_text":"硬核会员","identity":2,"birthday_conf":null,"bubble":""} | .modular_vip_section |= (.title += {"url":"https://www.bilibili.com/blackboard/era/kXP06cmqKtYULNL1.html?","text":"Ciallo～(∠・ω< )⌒★"} | .subtitle.text = "每天都要开心呀" | .button.text = "会员中心"))'
+# 会员中心页精简
+http-response-jq ^https:\/\/api\.bilibili\.com\/x\/vip\/web\/vip_center\/v2\? "(.data.banner,.data.free_welfare) = [] | del(.data.welfare,.data.buoy)"
+# 我的钱包页精简
+http-response-jq ^https:\/\/pay\.bilibili\.com\/payplatform\/cashier\/wallet\/getWalletPage\/v3$ ".data.coBrandCard = []"
+# 会员购首页
+http-response-jq ^https:\/\/mall\.bilibili\.com\/mall-c-search\/home\/index\/v2\? '.data.vo |= (del(.searchUrl.titleVoList,.orderBlock,.itemsCardBannerVO,.banners,.benefitVO,.allInOneCardVO) | .feeds.list |= map(if .type == "mallitems" and .saleType == 0 then .imageUrls = [.imageUrls[-1]] else empty end))'
+# 会员购首页更多商品
+http-response-jq ^https:\/\/mall\.bilibili\.com\/mall-c-search\/home\/feed\/list\? '.data.vo.list |= map(if .type == "mallitems" and .saleType == 0 then .imageUrls = [.imageUrls[-1]] else empty end)'
+# 会员购个人中心页精简
+http-response-jq ^https:\/\/show\.bilibili\.com\/api\/ticket-market\/owner\/home\? ".data.vo |= del(.adListV2,.config.magic)"
+# 商品详情页顶部滚动信息
+http-response-jq ^https:\/\/mall\.bilibili\.com\/mall-search-items\/items_detail\/info\? del(.data.basicInfoFloorVO.salePoint)
+http-response-jq ^https:\/\/mall\.bilibili\.com\/mall-search-items\/items\/merchant\/info\? del(.data.salePoint)
+
+[Script]
+Delete:
+bilibili.skin
+
+Delete Regex:
+bilibili.json:
+(?:resource\/show\/tab\/v2|
+(?:mine(?:\/ipad)?|
+))
+
+Delete Argument:
+bilibili.json
+
+Add:
+{{{界面伪装}}} = type=http-response,pattern=^https:\/\/app\.bilibili\.com\/x\/v2\/space\?.+&vmid=({{{-  UID}}}),argument="{"fansCount":{{{-  粉丝数}}},"likesCount":{{{-  点赞数}}},"vipLabel":{{{-  大会员标签}}},"levelMock":{{{-  等级伪装}}},"medalName":"{{{-  粉丝勋章名}}}"}",requires-body=1,max-size=-1,engine=webview,script-path=https://raw.githubusercontent.com/nathalie-annis/Surge/refs/heads/main/Script/bilibili/bilibili.fake.js
+
+[MITM]
+Add:
+, mall.bilibili.com, pay.bilibili.com, show.bilibili.com

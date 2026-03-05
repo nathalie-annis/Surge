@@ -7,7 +7,7 @@
 
 [Map Local]
 # 首页顶栏图片背景
-^https:\/\/jngj\.369cx\.cn\/theme\/Version7xx\/HomePage\/Background\/TitleBar\.png data-type=file data="https://raw.githubusercontent.com/Nathalie-Annis/Surge/refs/heads/main/Mock/369cx/TitleBar.png" header="Content-Type: image/png" status-code=200
+^https:\/\/jngj\.369cx\.cn\/theme\/Version7xx\/HomePage\/Background\/TitleBar\.png data-type=file data="https://raw.githubusercontent.com/nathalie-annis/Surge/refs/heads/main/Mock/369cx/TitleBar.png" header="Content-Type: image/png" status-code=200
 
 [Body Rewrite]
 # 去除开屏广告&定制App主题

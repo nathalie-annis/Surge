@@ -7,7 +7,7 @@
 
 [Map Local]
 # 搜索栏填充词
-^https:\/\/misc-api-prd-mx\.wandafilm\.com\/commend\/common_banner_batch\.api\?bannerInfos=.*?areaSymbol%22%3A%22Search data-type=file data="https://raw.githubusercontent.com/Nathalie-Annis/Surge/refs/heads/main/Mock/wandafilm/Search" header="Content-Type: text/plain" status-code=200
+^https:\/\/misc-api-prd-mx\.wandafilm\.com\/commend\/common_banner_batch\.api\?bannerInfos=.*?areaSymbol%22%3A%22Search data-type=file data="https://raw.githubusercontent.com/nathalie-annis/Surge/refs/heads/main/Mock/wandafilm/Search" header="Content-Type: text/plain" status-code=200
 # 搜索栏热搜|首页推荐资讯
 ^https:\/\/front-gateway-c\.wandafilm\.com\/content\/(search_input_integrate|index_content_list)\.api\? data-type=text data="{}" header="Content-Type: application/json" status-code=200
 # 首页悬浮小广告
