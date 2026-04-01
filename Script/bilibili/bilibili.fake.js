@@ -7,7 +7,8 @@ const vipImages = [
     "https://i0.hdslb.com/bfs/bangumi/kt/9e267149f2eee1408cefc1c8643794eda5c7b9b2.png", // 3: 大好人
     "https://i0.hdslb.com/bfs/bangumi/kt/7652c837aac3c936ccb5813935473af0b66c3d06.png", // 4: 萌节
     "https://i0.hdslb.com/bfs/bangumi/kt/6eada7b0430cc9f3281759fc3e7080967010f588.png", // 5: 春节
-    "https://i0.hdslb.com/bfs/bangumi/kt/621fc1b2e74fbd9a83471d694ef70673774b8fce.png"  // 6: 吉星
+    "https://i0.hdslb.com/bfs/bangumi/kt/621fc1b2e74fbd9a83471d694ef70673774b8fce.png", // 6: 吉星
+    "https://i0.hdslb.com/bfs/bangumi/kt/63fae4664cdc789375b58e7dd734b37d6b236e9f.png", // 7: 愚人节
 ];
 
 // 脚本外部参数解析
@@ -26,6 +27,13 @@ try {
 
 console.log("正在访问启用伪装的用户个人空间");
 let obj = JSON.parse($response.body);
+const now = new Date();
+console.log(`当前时间: ${now.toLocaleString()}`);
+const isFoolsDay = now.getMonth() === 3 && now.getDate() === 1;
+if (isFoolsDay) {
+    console.log("今天是愚人节");
+}
+
 
 // 伪装会员卡片标识
 if (obj?.data?.card?.vip) {
@@ -33,8 +41,16 @@ if (obj?.data?.card?.vip) {
     obj.data.card.vip.vipType = 2;
     obj.data.card.vip.vipStatus = 1;
     if (obj.data.card.vip.label) {
-        obj.data.card.vip.label.text = "百年大会员";
-        obj.data.card.vip.label.label_theme = "hundred_annual_vip";
+        if (isFoolsDay) {
+            vipLabel = 7;
+            obj.data.card.vip.label.bg_color = "#3EB559";
+            obj.data.card.vip.label.label_id = 52;
+            obj.data.card.vip.label.label_theme = "fools_day_hundred_annual_vip";
+            obj.data.card.vip.label.text = "百年小会员";
+        } else {
+            obj.data.card.vip.label.text = "百年大会员";
+            obj.data.card.vip.label.label_theme = "hundred_annual_vip";
+        }
         // 百年大会员标签选择逻辑
         if (vipLabel === -1) {
             // 从现有的图片中随机选择一个
@@ -252,7 +268,9 @@ if (exists) {
                     "placeholder": 1,
                     "src_type": 1,
                     "remote": {
-                        "url": "https://i0.hdslb.com/bfs/bangumi/kt/d98acde01bacc0e1f04cac59e693f91a6f59b401.png",
+                        "url": isFoolsDay
+                            ? "https://i0.hdslb.com/bfs/bangumi/kt/09463d393ec28128249f17fa018ff3226d2beaec.png"
+                            : "https://i0.hdslb.com/bfs/bangumi/kt/d98acde01bacc0e1f04cac59e693f91a6f59b401.png",
                         "bfs_style": "widget-layer-avatar"
                     }
                 }
@@ -418,7 +436,9 @@ else {
                     "placeholder": 1,
                     "src_type": 1,
                     "remote": {
-                        "url": "https://i0.hdslb.com/bfs/bangumi/kt/d98acde01bacc0e1f04cac59e693f91a6f59b401.png",
+                        "url": isFoolsDay
+                            ? "https://i0.hdslb.com/bfs/bangumi/kt/09463d393ec28128249f17fa018ff3226d2beaec.png"
+                            : "https://i0.hdslb.com/bfs/bangumi/kt/d98acde01bacc0e1f04cac59e693f91a6f59b401.png",
                         "bfs_style": "widget-layer-avatar"
                     }
                 }
