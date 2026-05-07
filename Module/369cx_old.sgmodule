@@ -1,0 +1,19 @@
+#!name=369出行增强
+#!desc=去除开屏广告、首页无用选项，允许定制App界面主题。适用于9.0以下版本。
+#!category=Enhancement
+#!system=ios
+#!arguments=color:#ff2d2d,theme:2
+#!arguments-desc=color: 主题色，Color Hex格式，原始值#1e73ff\ntheme: 应用主题，0-默认 1-橙色 2-特殊
+
+[Map Local]
+# 首页顶栏图片背景
+^https:\/\/jngj\.369cx\.cn\/theme\/Version7xx\/HomePage\/Background\/TitleBar\.png data-type=file data="https://raw.githubusercontent.com/nathalie-annis/Surge/refs/heads/main/Mock/369cx/TitleBar.png" header="Content-Type: image/png" status-code=200
+
+[Body Rewrite]
+# 去除开屏广告&定制App主题
+http-response-jq ^https:\/\/api\.369cx\.cn\/v2\/Splash\/GetSplashAd '.result.picUrl = "" | .result.theme |= (.themeMainType = {{{theme}}} | .themeColor = "{{{color}}}")'
+# 去除首页无用选项
+http-response-jq ^https:\/\/api\.369cx\.cn\/v2\/Home\/GetHomePageData 'def reorder($order): [ $order[] as $name | .[] | select(.name == $name) ]; .result |= (.banner = [] | .searchBarText = ["Ciallo～(∠・ω< )⌒★"] | .homeButton |= reorder(["畅游卡","单次票","查地铁","站点地图"]))'
+
+[MITM]
+hostname = %APPEND% api.369cx.cn, jngj.369cx.cn
